@@ -14,3 +14,6 @@ The program is able to execute identified oppertunities on the markets. Initiall
 
 **Phase 3**
 To be determined...
+
+## Exchanges
+Initially, oppertunities will be identified on **Kraken** and **Binance**.
