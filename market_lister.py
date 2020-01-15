@@ -15,13 +15,14 @@ class market_lister:
         self.exchangeB = ccxt.kraken({
                                         'enableRateLimit': True  # this option enables the built-in rate limiter (no ip ban)
                                         })
-        self.symbols = ['BTC/USDT','LTC/USDT','ETH/USDT','BCH/USDT','XRP/USDT','RVN/USDT','BCH/USDT'] #add params to add symbols #when this param make sure to check if theyre arbitrage pairs
+        self.symbols = ['BTC/USDT','ETH/USDT'] #add params to add symbols #when this param make sure to check if theyre arbitrage pairs
         self.A = self.exchangeA.name
         self.B = self.exchangeB.name
         self.USD_limit = 30 #USD$
         self.IP_banned = False
         self.timeout_on = False
-
+        self.depth = 100
+        self.limit_book = True
 
     def listCreator(self):
         workbook = xlsxwriter.Workbook('mysheet.xlsx')
@@ -50,7 +51,6 @@ class market_lister:
 
             dataA = self.exchangeA.fetch_ticker(self.symbols[x])
             dataB = self.exchangeB.fetch_ticker(self.symbols[x])
-            print('hi')
             #if dataA
 
             timeA.append(dataA['datetime'])
@@ -97,14 +97,13 @@ class market_lister:
 
         return data_dict
 
-    def print_chart(self):
+    def print_chart(self): #Prints chart with useful values in terminal
         data_dict = self.listCreator()
 
         print('\t\t\t\t     ',self.A,'  ',self.B)
         for x in self.symbols:
             temp = data_dict[x]
             print(temp['timeA'],' ',x,' ',temp['askA'],' ',temp['askB'],' ',temp['diff'],' ',temp['favor'],' ',temp['rating'])
-
         return data_dict
 
     def get_data(self):
@@ -113,7 +112,7 @@ class market_lister:
     def get_symbols(self):
         return self.symbols
 
-    def print_orderbook(self, symbol):
+    def print_orderbook(self, symbol,lim):
 
         workbook = xlsxwriter.Workbook('book.xlsx')
         worksheet = workbook.add_worksheet()
@@ -122,9 +121,9 @@ class market_lister:
         if(self.timeout_on):
             signal.alarm(5) #Timeout after 5 seconds
         try: #Try getting book
-            bookA = self.exchangeA.fetch_order_book(symbol, 100)
+            bookA = self.exchangeA.fetch_order_book(symbol, self.depth)
             #print("BookA recieved")
-            bookB = self.exchangeB.fetch_order_book(symbol, 100)
+            bookB = self.exchangeB.fetch_order_book(symbol, self.depth)
             #print("BookB recieved")
 
         except Exception: #if longer than ~3seconds assume IP Banned
@@ -136,10 +135,9 @@ class market_lister:
         bidsA = bookA['bids']
         bidsB = bookB['bids']
 
-        #Sort from Ascending order by cost
-        bidsA = sorted(bidsA, key = lambda x: float(x[1]))
-        bidsB = sorted(bidsB, key = lambda x: float(x[1]))
-
+        # #Sort from Ascending order by cost Error: Gives incorrect answers for B
+        # bidsA = sorted(bidsA, key = lambda x: float(x[1]))
+        # bidsB = sorted(bidsB, key = lambda x: float(x[1]))
 
         bidsA = bidsA[0:self.USD_limit]
         bidsB = bidsB[0:self.USD_limit]
@@ -147,19 +145,26 @@ class market_lister:
         worksheet.write(0,1,"Coin Value (A)")
         worksheet.write(0,2,'Coin Value (B)')
         worksheet.write(0,3,'Amount needed (B)')
+        refined_a = []
+        refined_b = []
 
         n=1
         for x in bidsA:
-            worksheet.write(n,1,x[0])
-            worksheet.write(n,0,x[1])
-            n+=1
+            if(x[1]<=lim or self.limit_book==False):
+                worksheet.write(n,1,x[0])
+                worksheet.write(n,0,x[1])
+                refined_a.append([x[0],x[1]])
+                n+=1
 
         n=1
         for x in bidsB:
-            worksheet.write(n,2,x[0])
-            worksheet.write(n,3,x[1])
-            n+=1
-
+            if(x[1]<=lim or self.limit_book==False):
+                worksheet.write(n,2,x[0])
+                worksheet.write(n,3,x[1])
+                refined_b.append([x[0],x[1]])
+                n+=1
+        print(refined_a)
+        print(refined_b)
         workbook.close()
         return (bookA, bookB)
 
@@ -171,5 +176,8 @@ class market_lister:
 
     def get_exchangeB(self):
         return self.exchangeB
+
+    def add_symbol(self, symbol):
+        self.symbols.append(symbol)
 
     signal.signal(signal.SIGALRM, handler)

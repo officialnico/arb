@@ -39,30 +39,36 @@ class calculator:
         return central
 
 
-    def usd_to_btc(self, usd): #estimates the price, used for limiting the book down to your price range
+    def usd_to_btc(self, usd): #estimates the price, STRICTLY used for limiting the book down to your price range
         #not in use yet, still working on it, not crucial
         flag = False
         btc = 0
         symbol = 'BTC/USDT'
 
-        jsonfile=open('data.txt', 'r')
+        temp = ccxt.binance()
+        tick = temp.fetch_ticker('BTC/USDT')
+        ask = tick["ask"]
+        quantity = usd/ask
+        return quantity
+        # jsonfile=open('data.txt', 'r')  ###TODO: make this work by caching the value of BTC during the last [num of time]
+        #
+        # try: #open data
+        #     data = json.load(jsonfile)
+        #     flag = False
+        #
+        # except Exception as e: #if no json data found
+        #     data = write_data()
+        #     flag = True
+        #
+        # if(flag==False):
+        #     dt = data["datetime"]
+        #     conv = self.timeMe(dt)
+        #
+        #     tz = timezone('EST')
+        #     time = datetime.now(tz)
+        #     print("conv:",conv,"\nconv_time:",conv)
+        #    print(time)
 
-        try: #open data
-            data = json.load(jsonfile)
-            flag = False
-
-        except Exception as e: #if no json data found
-            data = write_data()
-            flag = True
-
-        if(flag==False):
-            dt = data["datetime"]
-            conv = self.timeMe(dt)
-
-            tz = timezone('EST')
-            time = datetime.now(tz)
-            print("conv:",conv,"\nconv_time:",conv)
-            print(time)
 
 
 
