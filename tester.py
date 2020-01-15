@@ -2,20 +2,13 @@ import ccxt
 import market_lister
 import calculator
 
+#Initialize objects
 mar = market_lister.market_lister()
-balance = 500 #500$ spending limit
 symbols = mar.get_symbols()
 calc = calculator.calculator()
 
-# mar.print_orderbook('BTC/USDT')
-# print('hi')
-# print(len('2020-01-13'))
-# calc = calculator.calculator()
-# calc.write_data('BTC/USDT')
-# print("->",calc.timeMe('2020-01-14T02:51:44'))
-# calc.usd_to_btc(50)
 
-lim = calc.usd_to_btc(200)
+lim = calc.usd_to_btc(200) #get $X  and return XBTC, use this to limit 
 print("lim->",lim)
-mar.limit_book = False
-mar.print_orderbook("BTC/USDT",lim)
+mar.limit_book = False #if False, the order book will not be limited, you will recieve all values
+mar.print_orderbook("BTC/USDT",lim) #generate order book taking away only those orders under the limit
