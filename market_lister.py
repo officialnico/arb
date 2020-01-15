@@ -23,8 +23,8 @@ class market_lister:
         self.timeout_on = False
         self.depth = 100
         self.limit_book = True
-
-    def listCreator(self):
+ 
+    def listCreator(self): #creates a list with a more general outlook on mysheet.xlsx, we could probably delete this function later
         workbook = xlsxwriter.Workbook('mysheet.xlsx')
         worksheet = workbook.add_worksheet()
 
@@ -112,7 +112,7 @@ class market_lister:
     def get_symbols(self):
         return self.symbols
 
-    def print_orderbook(self, symbol,lim):
+    def print_orderbook(self, symbol,lim): #fetches the order book and writes it in xlsx format under book.xlsx
 
         workbook = xlsxwriter.Workbook('book.xlsx')
         worksheet = workbook.add_worksheet()
@@ -134,11 +134,7 @@ class market_lister:
         self.BTC_last = bookA['bids'][0][1]
         bidsA = bookA['bids']
         bidsB = bookB['bids']
-
-        # #Sort from Ascending order by cost Error: Gives incorrect answers for B
-        # bidsA = sorted(bidsA, key = lambda x: float(x[1]))
-        # bidsB = sorted(bidsB, key = lambda x: float(x[1]))
-
+        
         bidsA = bidsA[0:self.USD_limit]
         bidsB = bidsB[0:self.USD_limit]
         worksheet.write(0,0,'Amount needed (A)')
@@ -149,7 +145,7 @@ class market_lister:
         refined_b = []
 
         n=1
-        for x in bidsA:
+        for x in bidsA: #write to book
             if(x[1]<=lim or self.limit_book==False):
                 worksheet.write(n,1,x[0])
                 worksheet.write(n,0,x[1])
@@ -168,7 +164,7 @@ class market_lister:
         workbook.close()
         return (bookA, bookB)
 
-    def handler(signum, frame):
+    def handler(signum, frame): #timeout handler
         raise Exception("Timeout")
 
     def get_exchangeA(self):
@@ -180,4 +176,4 @@ class market_lister:
     def add_symbol(self, symbol):
         self.symbols.append(symbol)
 
-    signal.signal(signal.SIGALRM, handler)
+    signal.signal(signal.SIGALRM, handler) #this is used for the timeout when we're getting no response
