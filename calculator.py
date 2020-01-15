@@ -10,21 +10,18 @@ from pytz import timezone
 class calculator:
 
     def __init__(self):
-        self.balance = 500 #500$ spending limit
+        
 
-
-    def write_data(self, symbol):
+    def write_data(self, symbol): #writes the BTC/USDT tick to data #fetches symbol ticker (binance) and writes it to json file 
         temp = ccxt.binance()
         tick = temp.fetch_ticker('BTC/USDT')
 
         outfile=open('data.txt', 'w')
         json.dump(tick, outfile)
         outfile.close()
-        return tick #writes the BTC/USDT tick to data #fetches symbol ticker (binance) and writes it to json file
-
-
-
-    def timeMe(self, dt): #returns Eastern Time from UTC, not in use anywhere
+        return tick #will be good for use later when we want to cache a ticker to save tike
+    
+    def timeMe(self, dt): #returns Eastern Time from UTC, not in use anywhere, would be handy for knowing how old datetime's are
         #Hardcode zones:
         from_zone = tz.gettz('UTC')
         to_zone = tz.gettz('America/New_York')
@@ -50,44 +47,13 @@ class calculator:
         ask = tick["ask"]
         quantity = usd/ask
         return quantity
-        # jsonfile=open('data.txt', 'r')  ###TODO: make this work by caching the value of BTC during the last [num of time]
-        #
-        # try: #open data
-        #     data = json.load(jsonfile)
-        #     flag = False
-        #
-        # except Exception as e: #if no json data found
-        #     data = write_data()
-        #     flag = True
-        #
-        # if(flag==False):
-        #     dt = data["datetime"]
-        #     conv = self.timeMe(dt)
-        #
-        #     tz = timezone('EST')
-        #     time = datetime.now(tz)
-        #     print("conv:",conv,"\nconv_time:",conv)
-        #    print(time)
-
-
-
-
-        data = {'symbol':14}
-
 
     mar = market_lister.market_lister()
     exchangeA = mar.exchangeA
     exchangeB = mar.exchangeB
-
-
-
-        #price = ask/usd
-        #print(price)
 
 #We need to find out: optimal amount of money needed to make the most profit out of one sale
 
 #1. purchase in lower exchange
 #2. tranfer to second exhacnage
 #3. sell at second exchange
-
-#profit = HP - Transaction Fee - Withdraw fee -
