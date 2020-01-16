@@ -1,9 +1,9 @@
-# Arbitrage oppurtinity seeker and performer
+# Arbitrage opportinity seeker and performer
 
-## The purpose of this project is to create a bot that identifies and profits off of arbitrage oppertunities in the volotile crypto markets. The project will have the following phases:
+## The purpose of this project is to create a bot that identifies and profits off of arbitrage opportunities in the voatile crypto markets. The project will have the following phases:
 
 **Phase 1:**
-Identification of oppertunities. 
+Identification of opportunities.
 
 The program is run every few seconds and detects profitable price differences on two crypto markets. Once the price difference is identified, the program logs the event in a .xlsx file. Costs associated with transactions NEED TO BE CONSIDERED! These include trading, deposit and withdrawal fees.
 
@@ -16,4 +16,4 @@ The program is able to execute identified oppertunities on the markets. Initiall
 To be determined...
 
 ## Exchanges
-Initially, oppertunities will be identified on **Kraken** and **Binance**.
+Initially, opportunities will be identified on **Kraken** and **Binance**.

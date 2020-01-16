@@ -1,24 +1,35 @@
 # -*- coding: utf-8 -*-w
 import xlsxwriter
 import ccxt
-from tabulate import tabulate
+import json
+import time
+import signal
+import sys
 
 class market_lister:
 
     def __init__(self):
-        self.exchangeA = ccxt.binance()
-        self.exchangeB = ccxt.bittrex()
-        self.symbols = ['BTC/USDT','LTC/USDT','ETH/USDT','BCH/USDT','XRP/USDT','RVN/USDT','BCH/USDT'] #add params to add symbols #when this param make sure to check if theyre arbitrage pairs
+        self.exchangeA = ccxt.binance({
+                                        'enableRateLimit': True  # this option enables the built-in rate limiter (no ip ban)
+                                        })
+        self.exchangeB = ccxt.kraken({
+                                        'enableRateLimit': True  # this option enables the built-in rate limiter (no ip ban)
+                                        })
+        self.symbols = ['BTC/USDT','ETH/USDT'] #add params to add symbols #when this param make sure to check if theyre arbitrage pairs
         self.A = self.exchangeA.name
         self.B = self.exchangeB.name
-
-    def listCreator(self):
+        self.USD_limit = 30 #USD$
+        self.IP_banned = False
+        self.timeout_on = False
+        self.depth = 100
+        self.limit_book = True
+ 
+    def listCreator(self): #creates a list with a more general outlook on mysheet.xlsx, we could probably delete this function later
         workbook = xlsxwriter.Workbook('mysheet.xlsx')
         worksheet = workbook.add_worksheet()
 
         A=self.A
         B=self.B
-
 
         data_dict = {}
         timeA = []
@@ -40,7 +51,6 @@ class market_lister:
 
             dataA = self.exchangeA.fetch_ticker(self.symbols[x])
             dataB = self.exchangeB.fetch_ticker(self.symbols[x])
-
             #if dataA
 
             timeA.append(dataA['datetime'])
@@ -52,7 +62,7 @@ class market_lister:
             #profit = revenue - cost
             #costs = purchase_fee + withdraw fee + coin_purchase_price ### you have to have a range of prices and find the optimal amount and price
             #revenue = coin_sell_price
-
+            print('hi')
             if(d>0):
                 higher_price = dataA['ask']
                 lower_price = dataB['ask']
@@ -81,12 +91,13 @@ class market_lister:
 
             data_dict.update({self.symbols[x]:{'timeA':timeA[x],'timeB':timeB[x],'askA':askA[x],'askB':askB[x],'diff':diff[x],'rating':rating[x],'favor':favor[x]}})
             #{'BTC/USDT' :{'timeA':timeA,'timeB':timeB,'askA':askA,'askB':askB,'diff':diff,'favor':favor}}
-
-
+            self.BTC_last = data_dict['BTC/USDT']['askA']
+            print(self.BTC_last)
         workbook.close()
+
         return data_dict
 
-    def print_chart(self):
+    def print_chart(self): #Prints chart with useful values in terminal
         data_dict = self.listCreator()
 
         print('\t\t\t\t     ',self.A,'  ',self.B)
@@ -95,41 +106,74 @@ class market_lister:
             print(temp['timeA'],' ',x,' ',temp['askA'],' ',temp['askB'],' ',temp['diff'],' ',temp['favor'],' ',temp['rating'])
         return data_dict
 
+    def get_data(self):
+        return self.listCreator()
+
     def get_symbols(self):
         return self.symbols
 
-    def print_orderbook(self):
+    def print_orderbook(self, symbol,lim): #fetches the order book and writes it in xlsx format under book.xlsx
+
         workbook = xlsxwriter.Workbook('book.xlsx')
         worksheet = workbook.add_worksheet()
         symbol = 'BTC/USDT'
         length = 20
+        if(self.timeout_on):
+            signal.alarm(5) #Timeout after 5 seconds
+        try: #Try getting book
+            bookA = self.exchangeA.fetch_order_book(symbol, self.depth)
+            #print("BookA recieved")
+            bookB = self.exchangeB.fetch_order_book(symbol, self.depth)
+            #print("BookB recieved")
 
-        bookA = self.exchangeA.fetch_order_book(symbol, 100)
-        bookB = self.exchangeB.fetch_order_book(symbol, 100)
+        except Exception: #if longer than ~3seconds assume IP Banned
+            print("Error fetching book, check IP")
+            self.IP_banned = True
+            sys.exit(0)
+
+        self.BTC_last = bookA['bids'][0][1]
         bidsA = bookA['bids']
         bidsB = bookB['bids']
-        #Sort from Ascending order by cost
-        bidsA = sorted(bidsA, key = lambda x: float(x[1]))
-        bidsB = sorted(bidsB, key = lambda x: float(x[1]))
-
-        bidsA = bidsA[0:30]
-        bidsB = bidsB[0:30]
-
-
+        
+        bidsA = bidsA[0:self.USD_limit]
+        bidsB = bidsB[0:self.USD_limit]
         worksheet.write(0,0,'Amount needed (A)')
         worksheet.write(0,1,"Coin Value (A)")
         worksheet.write(0,2,'Coin Value (B)')
         worksheet.write(0,3,'Amount needed (B)')
+        refined_a = []
+        refined_b = []
 
         n=1
-        for x in bidsA:
-            worksheet.write(n,1,x[0])
-            worksheet.write(n,0,x[1])
-            n+=1
+        for x in bidsA: #write to book
+            if(x[1]<=lim or self.limit_book==False):
+                worksheet.write(n,1,x[0])
+                worksheet.write(n,0,x[1])
+                refined_a.append([x[0],x[1]])
+                n+=1
 
         n=1
         for x in bidsB:
-            worksheet.write(n,2,x[0])
-            worksheet.write(n,3,x[1])
-            n+=1
+            if(x[1]<=lim or self.limit_book==False):
+                worksheet.write(n,2,x[0])
+                worksheet.write(n,3,x[1])
+                refined_b.append([x[0],x[1]])
+                n+=1
+        print(refined_a)
+        print(refined_b)
         workbook.close()
+        return (bookA, bookB)
+
+    def handler(signum, frame): #timeout handler
+        raise Exception("Timeout")
+
+    def get_exchangeA(self):
+        return self.exchangeA
+
+    def get_exchangeB(self):
+        return self.exchangeB
+
+    def add_symbol(self, symbol):
+        self.symbols.append(symbol)
+
+    signal.signal(signal.SIGALRM, handler) #this is used for the timeout when we're getting no response
