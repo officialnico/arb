@@ -1,0 +1,14 @@
+XlsxWriter==1.0.4
+webencodings==0.5.1
+unicorn-binance-websocket-api==1.9.1
+unicorn-fy==0.3.1
+ccxt==1.21.20
+cheroot
+colorama
+flask
+flask_restful
+pathlib
+requests
+simplejson
+websocket-client
+websockets==7.0
