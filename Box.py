@@ -30,7 +30,7 @@ class Box:
                                             })
 
     def run(self):
-        
+
         #while(self.inOrder==False):
         bookA = self.A.fetch_order_book(self.symbol, self.depth)
         bookB = self.B.fetch_order_book(self.symbol, self.depth)
@@ -46,7 +46,7 @@ class Box:
             time.sleep(6)
             self.run()
 
-    def get_inOrder(self):
+    def get_inOrder(self):#inOrder is true is currently in the middle of an order
         return self.get_inOrder
 
     def set_inOrder(self, bool):
@@ -54,3 +54,4 @@ class Box:
 
 
 calc = calculator.calculator()
+ 
