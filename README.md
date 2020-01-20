@@ -33,3 +33,7 @@ Setting up the box:
 if you set recursion to true in the setup `box.run()` will start a recursive loop, printing the report every 6 seconds. Otheriwse it'll only run once
 
 ![](/boxes.png)
+
+## Update: Streaming Prices
+
+Run binance_stream.py for prices, feel free to tweek the coin and play around with it, it is still at very early stage
